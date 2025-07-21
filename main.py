@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
 import re
+import os
 
 def sanitize_table_name(name, dataset_id=None):
     name = name.lower()
@@ -88,7 +89,7 @@ class DHIS2ToPostgresDynamicTables:
                     print(f"⚠️ Skipping dataset {ds_id} (not found in DHIS2)")
                     continue
 
-                table_name = sanitize_table_name(f"dataset_{ds_name}", dataset_id=ds_id)
+                table_name = sanitize_table_name(f"{ds_name}", dataset_id=ds_id)
                 print(f"\n🔄 {idx} of {total_reports} Processing dataset '{ds_name}' → table '{table_name}'")
 
                 all_rows = []
@@ -140,16 +141,18 @@ class DHIS2ToPostgresDynamicTables:
 
 if __name__ == "__main__":
     BASE_URL = "https://dhis2.health.gov.mw/"
-    USERNAME = "xxxxxxxx"
-    PASSWORD = "xxxxxxxx"
+    USERNAME = ""
+    PASSWORD = ""
     START_DATE = "2024-01-01"
-    END_DATE = "2024-12-31"
+    END_DATE = "2025-06-30"
 
-    DB_URL = "postgresql+psycopg2://myuser:mypassword@localhost:5432/mydatabase"
+    # DB_URL = "postgresql+psycopg2://myuser:mypassword@localhost:5432/mydatabase"
+    DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
     engine = create_engine(DB_URL)
 
     # 🟩 Define only the datasets and org units you want
     # Replace with your dataset IDs and matching org unit IDs
+    # Adult Oncology Monthly Reporting Form
     #Paediatric Oncology Monthly Reporting Form
     #Mental Health Facility Report
     #Maternity Monthly Report
@@ -169,6 +172,7 @@ if __name__ == "__main__":
     # Maternal and Neonatal Death Report
     # Maternity Monthly Report
     dataset_orgunit_map = {
+        "s1cNbHCJQBB": ["RgROpL7BXAk", "NNAvUrfKB3A", "itHrcZFDWcK", "DOwQkYSluOZ"],
         "zysssD93UWM": ["zw8eLbN4Znw", "EQg6N2v2TXj", "GtRLLmB1Jc6"],
         "Fdn3C7gKoju": ["Rmh4wKR794k","jBJ1nrUXKIu"],
         "B0UtGNECmZW": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
