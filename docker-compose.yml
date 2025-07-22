@@ -19,12 +19,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dhis_sync_container
-    command: python main.py
+    command: sh -c "python main.py && python resolve_names.py"
     depends_on:
       - postgres
     environment:
       - DB_HOST=postgres
-      - DB_PORT=5432  # Still 5432 because that's the internal container port
+      - DB_PORT=5432
       - DB_NAME=dhis2_gov
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
@@ -32,7 +32,27 @@ services:
       - END_DATE=2025-06-30
     volumes:
       - .:/app
-    restart: unless-stopped
+    restart: "no"
+
+  # dhis_sync:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: dhis_sync_container
+  #   command: python main.py
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432  # Still 5432 because that's the internal container port
+  #     - DB_NAME=dhis2_gov
+  #     - DB_USER=myuser
+  #     - DB_PASSWORD=mypassword
+  #     - START_DATE=2024-01-01
+  #     - END_DATE=2025-06-30
+  #   volumes:
+  #     - .:/app
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:

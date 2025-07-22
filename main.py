@@ -1,9 +1,10 @@
 import requests
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, inspect
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
 import re
 import os
+import sys
 
 def sanitize_table_name(name, dataset_id=None):
     name = name.lower()
@@ -68,11 +69,29 @@ class DHIS2ToPostgresDynamicTables:
         except Exception as e:
             print(f"❌ Failed to fetch data elements: {e}")
 
+    def fetch_and_store_category_option_combos(self):
+        print("📥 Downloading category option combinations metadata...")
+        try:
+            response = self.client.get(
+                "api/categoryOptionCombos",
+                params={"paging": "false", "fields": "id,name"}
+            )
+            combos = response.get("categoryOptionCombos", [])
+            if combos:
+                df = pd.DataFrame(combos)
+                df.to_sql("dhis2_category_option_combos", self.engine, if_exists="replace", index=False)
+                print(f"✅ Stored {len(df)} category option combos in table 'dhis2_category_option_combos'")
+            else:
+                print("⚠️ No category option combos found.")
+        except Exception as e:
+            print(f"❌ Failed to fetch category option combos: {e}")
+
     def sync(self):
         session = self.Session()
         try:
             # First fetch and store all data elements
             self.fetch_and_store_data_elements()
+            self.fetch_and_store_category_option_combos()
 
             print("⏳ Fetching dataset metadata...")
             all_datasets = self.client.get("api/dataSets", params={"paging": "false", "fields": "id,name"})["dataSets"]
@@ -141,12 +160,12 @@ class DHIS2ToPostgresDynamicTables:
 
 if __name__ == "__main__":
     BASE_URL = "https://dhis2.health.gov.mw/"
-    USERNAME = ""
-    PASSWORD = ""
+    USERNAME = "evelynchibwe"
+    PASSWORD = "Training1@"
     START_DATE = "2024-01-01"
     END_DATE = "2025-06-30"
 
-    # DB_URL = "postgresql+psycopg2://myuser:mypassword@localhost:5432/mydatabase"
+    # DB_URL = "postgresql+psycopg2://myuser:mypassword@localhost:5433/dhis2_gov"
     DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
     engine = create_engine(DB_URL)
 
