@@ -160,8 +160,8 @@ class DHIS2ToPostgresDynamicTables:
 
 if __name__ == "__main__":
     BASE_URL = "https://dhis2.health.gov.mw/"
-    USERNAME = "evelynchibwe"
-    PASSWORD = "Training1@"
+    USERNAME = "xxxxxxxxxxxxx"
+    PASSWORD = "xxxxxxxxxxxx"
     START_DATE = "2024-01-01"
     END_DATE = "2025-06-30"
 
