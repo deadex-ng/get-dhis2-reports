@@ -14,29 +14,22 @@ category_options_combo_df = pd.read_sql("SELECT id, name FROM public.dhis2_categ
 de_map = data_elements_df.set_index('id')['name'].str.strip().to_dict()
 co_map = category_options_combo_df.set_index('id')['name'].str.strip().to_dict()
 
-# Step 3: List of form tables to process
-form_tables = [
-    "adult_oncology_monthly_reporting_form",
-    "cbmnc_monthly_report",
-    "cervical_cancer_control_program_monthly_report",
-    "cmam_stock_sheet_monthly_report",
-    "covid_19_monthly_reporting_form",
-    "epi_vaccination_performance_and_disease_surve_AZLEGU",
-    "exposed_child_under_24_months_follow_up",
-    "family_planning_monthly_report",
-    "hiv_self_test_distribution_monthly_report",
-    "hmis_15",
-    "htc_health_facility_report",
-    "imci_village_clinic_monthly_consolidation_report",
-    "kangaroo_mother_care_monthly_reporting_form",
-    "malaria_health_facility_report_",
-    "maternal_and_neonatal_death_report",
-    "maternity_monthly_report",
-    "mental_health_facility_report",
-    "paediatric_oncology_monthly_reporting_form"
-]
+# Step 3: Dynamically get all table names except excluded ones
+excluded_tables = {"dhis2_category_option_combos", "dhis2_data_elements"}
+
+# Fetch all table names in the public schema
+table_query = """
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+    AND table_type = 'BASE TABLE';
+"""
+all_tables_df = pd.read_sql(table_query, engine)
+form_tables = [tbl for tbl in all_tables_df['table_name'] if tbl not in excluded_tables]
 
 # Step 4: Process each form table
+failed_tables = []
+
 for table_name in form_tables:
     print(f"\n🔄 Processing table: {table_name}")
     try:
@@ -53,32 +46,29 @@ for table_name in form_tables:
                 de_name = de_map.get(de_id)
                 co_name = co_map.get(co_id)
 
-                if de_name:
-                    print(f"✅ DE {de_id} → {de_name}")
-                else:
-                    print(f"⚠️ DE {de_id} not found")
-
-                if co_name:
-                    print(f"✅ CO {co_id} → {co_name}")
-                else:
-                    print(f"⚠️ CO {co_id} not found")
-
                 de_part = (de_name or de_id).replace(" ", "_")
                 co_part = (co_name or co_id or "").replace(" ", "_")
 
                 new_name = f"{de_part}_{co_part}"
+
+                # 🧠 Smart truncation
+                for skip in [20, 30, 40]:
+                    if len(new_name) > 63:
+                        new_name = new_name[skip:]
                 if len(new_name) > 63:
-                    new_name = new_name[:60] + "_tr"
+                    new_name = new_name[:63]
             else:
                 new_name = col
 
             # Handle duplicate column names
-            if new_name not in seen_names:
-                seen_names.add(new_name)
-                rename_map[col] = new_name
-            else:
-                print(f"🚫 Duplicate column: {new_name}. Using original name: {col}")
-                rename_map[col] = col
+            base_name = new_name
+            suffix = 1
+            while new_name in seen_names:
+                new_name = f"{base_name}_{suffix}"
+                suffix += 1
+
+            seen_names.add(new_name)
+            rename_map[col] = new_name
 
         # Rename columns
         form_df = form_df.rename(columns=rename_map)
@@ -88,9 +78,14 @@ for table_name in form_tables:
         form_df.to_sql(new_table_name, engine, index=False, if_exists='replace')
         print(f"✅ Saved resolved table as: {new_table_name}")
 
-        # Save rename log
-        # pd.DataFrame(rename_map.items(), columns=["Original", "Renamed"]) \
-        #     .to_csv(f"{new_table_name}_column_map.csv", index=False)
-
     except Exception as e:
         print(f"❌ Failed to process {table_name}: {e}")
+        failed_tables.append(table_name)
+
+# Step 5: Show all failed tables
+if failed_tables:
+    print("\n❗ The following tables failed to process:")
+    for tbl in failed_tables:
+        print(f"  - {tbl}")
+else:
+    print("\n🎉 All tables processed successfully!")
