@@ -8,6 +8,7 @@ import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
+from datetime import datetime
 
 
 success_reports = []
@@ -33,7 +34,7 @@ class DHIS2Client:
     def get(self, endpoint, params=None):
         url = f"{self.base_url}/{endpoint}"
         try:
-            response = self.session.get(url, headers=self.headers, params=params, timeout=120, verify=False)
+            response = self.session.get(url, headers=self.headers, params=params, timeout=120, verify=True)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as http_err:
@@ -53,16 +54,17 @@ class DHIS2Client:
             raise
 
     def send_report_summary_email(self, success_reports, failed_reports):
-        recipients = ['fubanda@pih.org', 'kmatiya@pih.org', 'kmpinga@pih.org', 'tkadango@pih.org', 'amagagula@pih.org']
-
         msg = MIMEMultipart()
         msg['Subject'] = 'DHIS2 Gov Report Pull Summary'
         msg['From'] = 'thisisfumba@gmail.com'
-        msg['To'] = ", ".join(recipients)
+        msg['To'] = 'fubanda@pih.org'
+
+        # Get current timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         body_lines = []
         body_lines.append("📄 REPORT PULL SUMMARY\n")
-
+        body_lines.append(f"🕒 Timestamp: {timestamp}\n")
         body_lines.append("✅ SUCCESSFUL REPORTS:")
         for i, report in enumerate(success_reports, start=1):
             body_lines.append(f"  {i}. {report}")
@@ -80,7 +82,7 @@ class DHIS2Client:
         # Send email (using Gmail here)
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login('thisisfumba@gmail.com', 'xxxxxxxxxxxxxx')
+            server.login('thisisfumba@gmail.com', 'dlxq dapd ghmf okrz')
             server.send_message(msg)
 
 class DHIS2ToPostgresDynamicTables:
@@ -200,12 +202,14 @@ class DHIS2ToPostgresDynamicTables:
 
 if __name__ == "__main__":
     BASE_URL = "https://dhis2.health.gov.mw/"
-    USERNAME = "XXXXXXXXX"
-    PASSWORD = "XXXXXX"
+    USERNAME = "xxxxxx"
+    PASSWORD = "xxxxxx"
     START_DATE = "2024-01-01"
     END_DATE = "2025-06-30"
 
     DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
+
+
     engine = create_engine(DB_URL)
 
     # 🟩 Define only the datasets and org units you want
@@ -253,11 +257,12 @@ if __name__ == "__main__":
     # Comprehensive Abortion Care Reporting Form
     # Non Communicable Diseases Quarterly Reporting Form
     # ART Reporting Form - Part 2
+    # Target Population
     dataset_orgunit_map = {
         "s1cNbHCJQBB": ["RgROpL7BXAk", "NNAvUrfKB3A", "itHrcZFDWcK", "DOwQkYSluOZ"],
         "zysssD93UWM": ["zw8eLbN4Znw", "EQg6N2v2TXj", "GtRLLmB1Jc6"],
         "Fdn3C7gKoju": ["Rmh4wKR794k","jBJ1nrUXKIu"],
-        "B0UtGNECmZW": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "v0GaaWRKm61", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],        
+        "B0UtGNECmZW": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],        
         "P4oPxnYmYHY": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "ZABjSFibfGV": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "NX1lpqsalRy": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
@@ -266,16 +271,16 @@ if __name__ == "__main__":
         "cCsbOg15aNB": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "TZwgYAeQXxL": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "IhVEF2U4zhn": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
-        "q1Es3k3sZem": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "v0GaaWRKm61", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
+        "q1Es3k3sZem": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
         "Yz1PMQk1QlF": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
         "hWDsGIjs16g": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
         "ACmZFToDqxh": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
         "aYZsjFwm4P9": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
         "U31O0OHvtuS": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
-        "B0UtGNECmZW": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],                                                                        
+        "B0UtGNECmZW": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],                                                                        
         "clFAnObeT24": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
-        "mkD9UHGim8B": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "v0GaaWRKm61", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
-        "GzO4xPVk8pl": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "v0GaaWRKm61", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
+        "mkD9UHGim8B": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
+        "GzO4xPVk8pl": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
         "AtTb95TRx2Y": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "zhGkS89Ju5r": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "h4POFOPbISK": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
@@ -296,7 +301,8 @@ if __name__ == "__main__":
         "clFAnObeT24": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "ft7wAzSPfw5": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
         "WumH0XCnHT7": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
-        "mLAtASimykI": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"]
+        "mLAtASimykI": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym"],
+        "rkyO2EAX45C": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "iVOnl6X10Ym", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"]
     }
 
     dhis_client = DHIS2Client(BASE_URL, USERNAME, PASSWORD)
