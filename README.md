@@ -18,8 +18,8 @@ This document outlines the steps required to connect to the DHIS2 PostgreSQL dat
 - **Host**: `10.100.11.42:5433`  
 - **Database**: `dhis2_gov`
 
-> 📌 **Note**: You will need a username and password.  
-> 👉 **Contact Fumbani** to obtain the database password.
+> **Note**: You will need a username and password.  
+> **Contact Fumbani** to obtain the database password.
 
 ### 4. Navigate and Select Tables
 - Once connected, Power BI will load the list of available tables.
@@ -32,3 +32,4 @@ This document outlines the steps required to connect to the DHIS2 PostgreSQL dat
 - Perform your custom data transformations and build your visualizations as needed.
 
 ---
+
