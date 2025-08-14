@@ -21,8 +21,9 @@ def sanitize_table_name(name, dataset_id=None):
         name = 'ds_' + name
     if len(name) > 50:
         short_name = name[:45]
-        name = f"{short_name}_{dataset_id[-6:]}" if dataset_id else short_name
-    return name
+        dataset_suffix = dataset_id[-6:].lower() if dataset_id else ''
+        name = f"{short_name}_{dataset_suffix}" if dataset_suffix else short_name
+    return name    
 
 class DHIS2Client:
     def __init__(self, base_url, username, password):
@@ -74,7 +75,7 @@ class DHIS2Client:
             for i, report in enumerate(failed_reports, start=1):
                 body_lines.append(f"  {i}. {report}")
         else:
-            body_lines.append("\n🎉 All reports pulled successfully!")
+            body_lines.append("\n All reports pulled successfully!")
 
         body = "\n".join(body_lines)
         msg.attach(MIMEText(body, 'plain'))
@@ -96,21 +97,21 @@ class DHIS2ToPostgresDynamicTables:
         self.dataset_orgunit_map = dataset_orgunit_map
 
     def fetch_and_store_data_elements(self):
-        print("📥 Downloading data elements metadata...")
+        print("Downloading data elements metadata...")
         try:
             response = self.client.get("api/dataElements", params={"paging": "false", "fields": "id,name"})
             elements = response.get("dataElements", [])
             if elements:
                 df = pd.DataFrame(elements)
                 df.to_sql("dhis2_data_elements", self.engine, if_exists="replace", index=False)
-                print(f"✅ Stored {len(df)} data elements in table 'dhis2_data_elements'")
+                print(f"Stored {len(df)} data elements in table 'dhis2_data_elements'")
             else:
-                print("⚠️ No data elements found.")
+                print("No data elements found.")
         except Exception as e:
-            print(f"❌ Failed to fetch data elements: {e}")
+            print(f"Failed to fetch data elements: {e}")
 
     def fetch_and_store_category_option_combos(self):
-        print("📥 Downloading category option combinations metadata...")
+        print("Downloading category option combinations metadata...")
         try:
             response = self.client.get(
                 "api/categoryOptionCombos",
@@ -120,11 +121,11 @@ class DHIS2ToPostgresDynamicTables:
             if combos:
                 df = pd.DataFrame(combos)
                 df.to_sql("dhis2_category_option_combos", self.engine, if_exists="replace", index=False)
-                print(f"✅ Stored {len(df)} category option combos in table 'dhis2_category_option_combos'")
+                print(f"Stored {len(df)} category option combos in table 'dhis2_category_option_combos'")
             else:
-                print("⚠️ No category option combos found.")
+                print("No category option combos found.")
         except Exception as e:
-            print(f"❌ Failed to fetch category option combos: {e}")
+            print(f"Failed to fetch category option combos: {e}")
 
     def sync(self):
         session = self.Session()
@@ -145,17 +146,17 @@ class DHIS2ToPostgresDynamicTables:
             for idx, (ds_id, org_unit_ids) in enumerate(self.dataset_orgunit_map.items(), start=1):
                 ds_name = dataset_lookup.get(ds_id)
                 if not ds_name:
-                    print(f"⚠️ Skipping dataset {ds_id} (not found in DHIS2)")
+                    print(f"Skipping dataset {ds_id} (not found in DHIS2)")
                     continue
 
                 table_name = sanitize_table_name(f"{ds_name}", dataset_id=ds_id)
-                print(f"\n🔄 {idx} of {total_reports} Processing dataset '{ds_name}' → table '{table_name}'")
+                print(f"\n{idx} of {total_reports} Processing dataset '{ds_name}' → table '{table_name}'")
 
                 all_rows = []
 
                 for ou_id in org_unit_ids:
                     ou_name = org_lookup.get(ou_id, "Unknown Facility")
-                    print(f"  📍 Fetching org unit '{ou_name}' ({ou_id})")
+                    print(f"Fetching org unit '{ou_name}' ({ou_id})")
 
                     params = {
                         "dataSet": ds_id,
@@ -176,7 +177,7 @@ class DHIS2ToPostgresDynamicTables:
                             }
                             all_rows.append(row)
                     except Exception as e:
-                        print(f"    ❌ Error fetching data for OU {ou_id}: {e}")
+                        print(f"Error fetching data for OU {ou_id}: {e}")
 
                 if all_rows:
                     df = pd.DataFrame(all_rows)
@@ -192,19 +193,19 @@ class DHIS2ToPostgresDynamicTables:
                     wide_df.columns = [str(col) for col in wide_df.columns]
 
                     wide_df.to_sql(table_name, self.engine, if_exists="replace", index=False)
-                    print(f"  ✅ Stored {len(wide_df)} rows in table '{table_name}'")
+                    print(f"Stored {len(wide_df)} rows in table '{table_name}'")
                     success_reports.append(table_name)
                 else:
-                    print(f"  ⚠️ No data found for dataset '{ds_name}'")
+                    print(f"No data found for dataset '{ds_name}'")
                     failed_reports.append(ds_name)
         finally:
             session.close()
 
 if __name__ == "__main__":
     BASE_URL = "https://dhis2.health.gov.mw/"
-    USERNAME = "xxxxxx"
-    PASSWORD = "xxxxxx"
-    START_DATE = "2024-01-01"
+    USERNAME = "xxxx"
+    PASSWORD = "xxxx"
+    START_DATE = "2022-01-01"
     END_DATE = "2025-06-30"
 
     DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
@@ -258,6 +259,8 @@ if __name__ == "__main__":
     # Non Communicable Diseases Quarterly Reporting Form
     # ART Reporting Form - Part 2
     # Target Population
+    
+    # EPI & ART
     dataset_orgunit_map = {
         "s1cNbHCJQBB": ["RgROpL7BXAk", "NNAvUrfKB3A", "itHrcZFDWcK", "DOwQkYSluOZ"],
         "zysssD93UWM": ["zw8eLbN4Znw", "EQg6N2v2TXj", "GtRLLmB1Jc6"],

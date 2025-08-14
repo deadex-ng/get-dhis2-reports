@@ -51,7 +51,7 @@ for table_name in form_tables:
 
                 new_name = f"{de_part}_{co_part}"
 
-                # 🧠 Smart truncation
+                # Smart truncation
                 for skip in [20, 30, 40]:
                     if len(new_name) > 63:
                         new_name = new_name[skip:]
@@ -76,16 +76,16 @@ for table_name in form_tables:
         # Save renamed table
         new_table_name = f"{table_name}_resolved"
         form_df.to_sql(new_table_name, engine, index=False, if_exists='replace')
-        print(f"✅ Saved resolved table as: {new_table_name}")
+        print(f"Saved resolved table as: {new_table_name}")
 
     except Exception as e:
-        print(f"❌ Failed to process {table_name}: {e}")
+        print(f"Failed to process {table_name}: {e}")
         failed_tables.append(table_name)
 
 # Step 5: Show all failed tables
 if failed_tables:
-    print("\n❗ The following tables failed to process:")
+    print("\nThe following tables failed to process:")
     for tbl in failed_tables:
         print(f"  - {tbl}")
 else:
-    print("\n🎉 All tables processed successfully!")
+    print("\nAll tables processed successfully!")
