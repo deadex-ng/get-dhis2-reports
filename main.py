@@ -206,7 +206,7 @@ if __name__ == "__main__":
     USERNAME = "xxxx"
     PASSWORD = "xxxx"
     START_DATE = "2022-01-01"
-    END_DATE = "2025-06-30"
+    END_DATE = "2025-07-31"
 
     DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
 
@@ -215,6 +215,7 @@ if __name__ == "__main__":
 
     # 🟩 Define only the datasets and org units you want
     # Replace with your dataset IDs and matching org unit IDs
+    # NCD Quarterly Report
     # Post Natal Care Clinic -Facility Report
     # Adult Oncology Monthly Reporting Form
     # Paediatric Oncology Monthly Reporting Form
@@ -261,6 +262,7 @@ if __name__ == "__main__":
     # Target Population
 
     dataset_orgunit_map = {
+        "WumH0XCnHT7": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb"],
         "mkD9UHGim8B": ["pciHYsH4glX","gA0WGnhCnYt","GjNQ12Y2l0F","cfzBcWqPOoy","JKAFWLrwdji","zq5yo5iRvsL","NW5K84KJ4xp","HxziIaDjatq", "I4Vox6oteWl", "Rmh4wKR794k", "jBJ1nrUXKIu", "y3FF95NnZzl", "NFqFeBSH2Re", "EiLdri7MySb", "fQCAaNl0UMA", "j94m3pNGJLw", "AWytIG2qdwP", "axZoBBHwZo2", "Keuq4t91SIs", "OXaQtzbzMoy", "DAueKP2YUvT", "M5ZUfC4v8GV", "Z4phqEA2Pcr", "AiR2MD63tCb", "d9yZ10QgeOl", "WehVfN1t0Aa", "gTkYqxfVTM0"],
         "s1cNbHCJQBB": ["RgROpL7BXAk", "NNAvUrfKB3A", "itHrcZFDWcK", "DOwQkYSluOZ"],
         "zysssD93UWM": ["zw8eLbN4Znw", "EQg6N2v2TXj", "GtRLLmB1Jc6"],
