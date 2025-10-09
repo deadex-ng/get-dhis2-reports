@@ -8,7 +8,7 @@ import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 
 success_reports = []
@@ -206,8 +206,11 @@ if __name__ == "__main__":
     USERNAME = "xxxx"
     PASSWORD = "xxxx"
     START_DATE = "2022-01-01"
-    END_DATE = "2025-07-31"
-
+    today = date.today()
+    first_day_this_month = today.replace(day=1)
+    last_day_prev_month = first_day_this_month - timedelta(days=1)
+    END_DATE = last_day_prev_month.strftime("%Y-%m-%d")
+    
     DB_URL = f"postgresql+psycopg2://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
 
 
